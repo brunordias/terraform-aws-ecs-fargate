@@ -25,11 +25,6 @@ variable "app_environment" {
   description = "List of one or more environment variables to be inserted in the container."
 }
 
-variable "region" {
-  type        = string
-  description = "The AWS region."
-}
-
 variable "fargate_cpu" {
   type        = number
   description = "Fargate instance CPU units to provision (1 vCPU = 1024 CPU units)."
@@ -42,14 +37,14 @@ variable "fargate_memory" {
   default     = 512
 }
 
-variable "vpc_name" {
+variable "vpc_id" {
   type        = string
-  description = "The VPC name where the task will be performed."
+  description = "The VPC id where the task will be performed."
 }
 
-variable "subnet_name" {
+variable "subnet_ids" {
   type        = list(any)
-  description = "List of one or more subnet names where the task will be performed."
+  description = "List of one or more subnet ids where the task will be performed."
 }
 
 variable "ecs_cluster" {
@@ -227,7 +222,7 @@ variable "deployment_circuit_breaker" {
 }
 
 variable "app_environment_file_arn" {
-  type        = string
+  type        = list(any)
   default     = null
   description = "The ARN from the environment file hosted in S3."
 }
@@ -242,4 +237,10 @@ variable "deployment_controller" {
   type        = string
   default     = "ECS"
   description = "Type of deployment controller. Valid values: CODE_DEPLOY, ECS, EXTERNAL"
+}
+
+variable "app_secrets" {
+  type        = list(any)
+  default     = []
+  description = "List of one or more environment variables from Secrets Manager."
 }

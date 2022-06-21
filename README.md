@@ -1,10 +1,6 @@
 # AWS ECS Fargate Terraform module
 Terraform module which provides tasks definitions, services, scaling and load balancing to ECS powered by AWS Fargate.
 
-## Terraform versions
-
-Terraform >= 0.12
-
 ## Usage
 
 ```hcl
@@ -50,15 +46,14 @@ module "ecs_cluster" {
 ## ECS Fargate
 module "ecs_fargate" {
   source  = "brunordias/ecs-fargate/aws"
-  version = "5.0.0"
+  version = "6.0.0"
 
   name                       = "nginx"
-  region                     = "us-east-1"
   ecs_cluster                = module.ecs_cluster.id
   image_uri                  = "public.ecr.aws/nginx/nginx:1.19-alpine"
   platform_version           = "1.4.0"
-  vpc_name                   = "default"
-  subnet_name                = ["public-d", "public-e"]
+  vpc_id                     = "vpc-example"
+  subnet_ids                 = ["subnet-example001", "subnet-example002"]
   fargate_cpu                = 256
   fargate_memory             = 512
   ecs_service_desired_count  = 2
@@ -121,9 +116,18 @@ module "ecs_fargate" {
   }
   app_environment = [
     {
-      "name" : "environment",
-      "value" : "development"
-    },
+      name  = "ENV-NAME"
+      value = "development"
+    }
+  ]
+  app_environment_file_arn = [
+    "arn:aws:s3:::bucket-example/file.env"
+  ]
+  app_secrets = [
+    {
+      name      = "ENV-NAME"
+      valueFrom = "arn:aws:secretsmanager:us-east-1:000000000:secret:example/ENV-NAME-id"
+    }
   ]
   efs_volume_configuration = [
     {
@@ -150,13 +154,16 @@ module "ecs_fargate" {
 
 ## Requirements
 
-No requirements.
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.13.1 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.74.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 3.74.0 |
 
 ## Modules
 
@@ -189,7 +196,7 @@ No modules.
 | [aws_security_group.ecs_tasks](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_service_discovery_service.service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/service_discovery_service) | resource |
 | [aws_arn.ecs_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/arn) | data source |
-| [aws_subnet_ids.public](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet_ids) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_vpc.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc) | data source |
 
 ## Inputs
@@ -197,8 +204,9 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_app_environment"></a> [app\_environment](#input\_app\_environment) | List of one or more environment variables to be inserted in the container. | `list(any)` | `[]` | no |
-| <a name="input_app_environment_file_arn"></a> [app\_environment\_file\_arn](#input\_app\_environment\_file\_arn) | The ARN from the environment file hosted in S3. | `string` | `null` | no |
+| <a name="input_app_environment_file_arn"></a> [app\_environment\_file\_arn](#input\_app\_environment\_file\_arn) | The ARN from the environment file hosted in S3. | `list(any)` | `null` | no |
 | <a name="input_app_port"></a> [app\_port](#input\_app\_port) | The application TCP port number. | `number` | n/a | yes |
+| <a name="input_app_secrets"></a> [app\_secrets](#input\_app\_secrets) | List of one or more environment variables from Secrets Manager. | `list(any)` | `[]` | no |
 | <a name="input_assign_public_ip"></a> [assign\_public\_ip](#input\_assign\_public\_ip) | Assign a public IP address to the ENI | `bool` | `true` | no |
 | <a name="input_autoscaling"></a> [autoscaling](#input\_autoscaling) | Boolean designating an Auto Scaling. | `bool` | `false` | no |
 | <a name="input_autoscaling_settings"></a> [autoscaling\_settings](#input\_autoscaling\_settings) | Settings of Auto Scaling. | `map(any)` | <pre>{<br>  "max_capacity": 0,<br>  "min_capacity": 0,<br>  "scale_in_cooldown": 300,<br>  "scale_out_cooldown": 300,<br>  "target_cpu_value": 0<br>}</pre> | no |
@@ -207,6 +215,7 @@ No modules.
 | <a name="input_cloudwatch_settings"></a> [cloudwatch\_settings](#input\_cloudwatch\_settings) | Settings of Cloudwatch Alarms. | `any` | `{}` | no |
 | <a name="input_container_definitions"></a> [container\_definitions](#input\_container\_definitions) | External ECS container definitions | `any` | `null` | no |
 | <a name="input_deployment_circuit_breaker"></a> [deployment\_circuit\_breaker](#input\_deployment\_circuit\_breaker) | Boolean designating a deployment circuit breaker. | `bool` | `false` | no |
+| <a name="input_deployment_controller"></a> [deployment\_controller](#input\_deployment\_controller) | Type of deployment controller. Valid values: CODE\_DEPLOY, ECS, EXTERNAL | `string` | `"ECS"` | no |
 | <a name="input_ecs_cluster"></a> [ecs\_cluster](#input\_ecs\_cluster) | The ARN of ECS cluster. | `string` | `""` | no |
 | <a name="input_ecs_service"></a> [ecs\_service](#input\_ecs\_service) | Boolean designating a service. | `bool` | `false` | no |
 | <a name="input_ecs_service_desired_count"></a> [ecs\_service\_desired\_count](#input\_ecs\_service\_desired\_count) | The number of instances of the task definition to place and keep running. | `number` | `1` | no |
@@ -231,11 +240,10 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | Used to name resources and prefixes. | `string` | n/a | yes |
 | <a name="input_platform_version"></a> [platform\_version](#input\_platform\_version) | The Fargate platform version on which to run your service. | `string` | `"LATEST"` | no |
 | <a name="input_policies"></a> [policies](#input\_policies) | List of one or more IAM policy ARN to be used in the Task execution IAM role. | `list(any)` | `[]` | no |
-| <a name="input_region"></a> [region](#input\_region) | The AWS region. | `string` | n/a | yes |
 | <a name="input_service_discovery_namespace_id"></a> [service\_discovery\_namespace\_id](#input\_service\_discovery\_namespace\_id) | Service Discovery Namespace ID. | `string` | `null` | no |
-| <a name="input_subnet_name"></a> [subnet\_name](#input\_subnet\_name) | List of one or more subnet names where the task will be performed. | `list(any)` | n/a | yes |
+| <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | List of one or more subnet ids where the task will be performed. | `list(any)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A mapping of tags to assign to all resources. | `map(string)` | `{}` | no |
-| <a name="input_vpc_name"></a> [vpc\_name](#input\_vpc\_name) | The VPC name where the task will be performed. | `string` | n/a | yes |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The VPC id where the task will be performed. | `string` | n/a | yes |
 
 ## Outputs
 

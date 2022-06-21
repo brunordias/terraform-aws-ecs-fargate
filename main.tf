@@ -12,7 +12,7 @@ locals {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.this.name
-          awslogs-region        = var.region
+          awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "ecs"
         }
       }
@@ -22,26 +22,19 @@ locals {
           hostPort      = var.app_port
         }
       ]
-      environmentFiles = var.app_environment_file_arn != null ? [{ value = var.app_environment_file_arn, type = "s3" }] : null
+      environmentFiles = var.app_environment_file_arn != null ? [for s in var.app_environment_file_arn : { value = (s), type = "s3" }] : null
       environment      = var.app_environment
+      secrets          = var.app_secrets
       mountPoints      = var.efs_mount_configuration
     }
   ]
 }
 
 ### Data
-data "aws_vpc" "this" {
-  tags = {
-    Name = var.vpc_name
-  }
-}
+data "aws_region" "current" {}
 
-data "aws_subnet_ids" "public" {
-  vpc_id = data.aws_vpc.this.id
-  filter {
-    name   = "tag:Name"
-    values = var.subnet_name
-  }
+data "aws_vpc" "this" {
+  id = var.vpc_id
 }
 
 data "aws_arn" "ecs_cluster" {
@@ -221,9 +214,9 @@ EOF
 }
 
 resource "aws_iam_role_policy" "execution_policy_s3" {
-  count = var.app_environment_file_arn != null ? 1 : 0
+  count = var.app_environment_file_arn != null ? length(var.app_environment_file_arn) : 0
 
-  name = "${var.name}-ecs-execution-s3-policy"
+  name = "${var.name}-ecs-execution-s3-policy-${count.index}"
   role = aws_iam_role.execution_role.id
 
   policy = <<EOF
@@ -236,7 +229,7 @@ resource "aws_iam_role_policy" "execution_policy_s3" {
         "s3:GetObject"
       ],
       "Resource": [
-        "${var.app_environment_file_arn}"
+        "${var.app_environment_file_arn[count.index]}"
       ]
     }
   ]
@@ -361,7 +354,7 @@ resource "aws_ecs_service" "this" {
 
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
-    subnets          = data.aws_subnet_ids.public.ids
+    subnets          = var.subnet_ids
     assign_public_ip = var.assign_public_ip
   }
 
