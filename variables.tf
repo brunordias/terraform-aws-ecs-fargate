@@ -244,3 +244,21 @@ variable "app_secrets" {
   default     = []
   description = "List of one or more environment variables from Secrets Manager."
 }
+
+variable "fargate_entrypoint" {
+  type        = list(any)
+  default     = null
+  description = "The entry point that's passed to the container. This parameter maps to Entrypoint in the Create a container."
+}
+
+variable "fargate_command" {
+  type        = list(any)
+  default     = null
+  description = "The command that's passed to the container. This parameter maps to Cmd in the Create a container."
+}
+
+variable "fargate_working_directory" {
+  type        = string
+  default     = null
+  description = "The working directory to run commands inside the container in. This parameter maps to WorkingDir in the Create a container."
+}

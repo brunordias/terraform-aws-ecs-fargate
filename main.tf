@@ -2,12 +2,15 @@
 locals {
   container_definitions = [
     {
-      cpu         = var.fargate_cpu
-      image       = var.image_uri
-      memory      = var.fargate_memory
-      name        = var.name
-      networkMode = "awsvpc"
-      essential   = var.fargate_essential
+      cpu              = var.fargate_cpu
+      image            = var.image_uri
+      memory           = var.fargate_memory
+      name             = var.name
+      networkMode      = "awsvpc"
+      essential        = var.fargate_essential
+      entryPoint       = var.fargate_entrypoint
+      command          = var.fargate_command
+      workingDirectory = var.fargate_working_directory
       logConfiguration = {
         logDriver = "awslogs"
         options = {

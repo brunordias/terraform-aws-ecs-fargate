@@ -221,9 +221,12 @@ No modules.
 | <a name="input_ecs_service_desired_count"></a> [ecs\_service\_desired\_count](#input\_ecs\_service\_desired\_count) | The number of instances of the task definition to place and keep running. | `number` | `1` | no |
 | <a name="input_efs_mount_configuration"></a> [efs\_mount\_configuration](#input\_efs\_mount\_configuration) | Settings of EFS mount configuration. | `list(any)` | `[]` | no |
 | <a name="input_efs_volume_configuration"></a> [efs\_volume\_configuration](#input\_efs\_volume\_configuration) | Settings of EFS volume configuration. | `list(any)` | `[]` | no |
+| <a name="input_fargate_command"></a> [fargate\_command](#input\_fargate\_command) | The command that's passed to the container. This parameter maps to Cmd in the Create a container. | `list(any)` | `null` | no |
 | <a name="input_fargate_cpu"></a> [fargate\_cpu](#input\_fargate\_cpu) | Fargate instance CPU units to provision (1 vCPU = 1024 CPU units). | `number` | `256` | no |
+| <a name="input_fargate_entrypoint"></a> [fargate\_entrypoint](#input\_fargate\_entrypoint) | The entry point that's passed to the container. This parameter maps to Entrypoint in the Create a container. | `list(any)` | `null` | no |
 | <a name="input_fargate_essential"></a> [fargate\_essential](#input\_fargate\_essential) | Boolean designating a Fargate essential container. | `bool` | `true` | no |
 | <a name="input_fargate_memory"></a> [fargate\_memory](#input\_fargate\_memory) | Fargate instance memory to provision (in MiB). | `number` | `512` | no |
+| <a name="input_fargate_working_directory"></a> [fargate\_working\_directory](#input\_fargate\_working\_directory) | The working directory to run commands inside the container in. This parameter maps to WorkingDir in the Create a container. | `string` | `null` | no |
 | <a name="input_health_check"></a> [health\_check](#input\_health\_check) | Health check in Load Balance target group. | `map(any)` | `null` | no |
 | <a name="input_image_uri"></a> [image\_uri](#input\_image\_uri) | The container image URI. | `string` | n/a | yes |
 | <a name="input_lb_arn_suffix"></a> [lb\_arn\_suffix](#input\_lb\_arn\_suffix) | The ARN suffix for use with Auto Scaling ALB requests per target. | `string` | `""` | no |
