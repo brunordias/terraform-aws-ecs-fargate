@@ -11,3 +11,10 @@ output "task_security_group_id" {
   description = "The id of the Security Group used in tasks."
   depends_on  = []
 }
+
+output "task_lb_target_group_arn" {
+  value       = aws_lb_target_group.app.0.arn
+  sensitive   = false
+  description = "The ARN of the task load balancer target group."
+  depends_on  = []
+}

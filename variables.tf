@@ -133,7 +133,7 @@ variable "lb_arn_suffix" {
 
 variable "lb_listener_arn" {
   type        = list(any)
-  default     = [""]
+  default     = []
   description = "List of ARN LB listeners"
 }
 
