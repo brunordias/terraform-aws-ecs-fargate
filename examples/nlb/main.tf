@@ -1,7 +1,5 @@
 provider "aws" {
   region = local.region
-
-  profile = "select-dev"
 }
 
 locals {
