@@ -168,7 +168,7 @@ variable "autoscaling" {
 }
 
 variable "autoscaling_settings" {
-  type = map(any)
+  type = any
   default = {
     max_capacity       = 0
     min_capacity       = 0
