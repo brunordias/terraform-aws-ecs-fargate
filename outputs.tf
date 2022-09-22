@@ -13,7 +13,7 @@ output "task_security_group_id" {
 }
 
 output "task_lb_target_group_arn" {
-  value       = aws_lb_target_group.app.0.arn
+  value       = try(aws_lb_target_group.app.0.arn, null)
   sensitive   = false
   description = "The ARN of the task load balancer target group."
   depends_on  = []

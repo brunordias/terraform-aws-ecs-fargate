@@ -46,7 +46,7 @@ module "ecs_cluster" {
 ## ECS Fargate
 module "ecs_fargate" {
   source  = "brunordias/ecs-fargate/aws"
-  version = "6.0.0"
+  version = "~> 6.1.0"
 
   name                       = "nginx"
   ecs_cluster                = module.ecs_cluster.id
@@ -88,22 +88,52 @@ module "ecs_fargate" {
   capacity_provider_strategy = [
     {
       capacity_provider = "FARGATE"
-      weight            = 50
+      weight            = 1
       base              = 0
     },
     {
       capacity_provider = "FARGATE_SPOT"
-      weight            = 50
+      weight            = 4
       base              = 0
     }
   ]
   autoscaling = true
-  autoscaling_settings = {
-    max_capacity       = 4
-    min_capacity       = 1
-    target_cpu_value   = 60
-    scale_in_cooldown  = 60
-    scale_out_cooldown = 900
+  autoscaling_settings  = {
+    max_capacity        = 10
+    min_capacity        = 1
+    target_cpu_value    = 65
+    target_memory_value = 65
+    scale_in_cooldown   = 300
+    scale_out_cooldown  = 300
+    custom_metric = [
+      {
+        target_value = 100
+        metric_name  = "ApproximateNumberOfMessagesVisible"
+        namespace    = "AWS/SQS"
+        statistic    = "Average"
+        unit         = "Count"
+        dimensions = [
+          {
+            name  = "QueueName"
+            value = "your-queue-name"
+          }
+        ]
+      }
+    ]
+    scheduled = [
+      {
+        schedule     = "cron(00 7 * * ? *)"
+        min_capacity = 5
+        max_capacity = 10
+        timezone     = "America/Sao_Paulo"
+      },
+      {
+        schedule     = "cron(30 20 * * ? *)"
+        min_capacity = 1
+        max_capacity = 1
+        timezone     = "America/Sao_Paulo"
+      }
+    ]
   }
   cloudwatch_settings = {
     enabled          = true
@@ -112,6 +142,7 @@ module "ecs_fargate" {
     memory_threshold = 80
     max_task_count   = 4
     min_task_count   = 1
+    deployment_count = 1
     sns_topic_arn    = ["arn:aws:sns:us-east-1:1111111111:NotifyMe"]
   }
   app_environment = [
@@ -174,11 +205,14 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_appautoscaling_policy.ecs_policy_cpu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
+| [aws_appautoscaling_policy.ecs_policy_custom](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
 | [aws_appautoscaling_policy.ecs_policy_memory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
 | [aws_appautoscaling_policy.ecs_policy_requests](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
+| [aws_appautoscaling_scheduled_action.ecs_scheduled](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_scheduled_action) | resource |
 | [aws_appautoscaling_target.ecs_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_target) | resource |
 | [aws_cloudwatch_log_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_service_cpu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
+| [aws_cloudwatch_metric_alarm.ecs_service_deployment_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_service_max_task_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_service_memory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.ecs_service_min_task_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
@@ -209,7 +243,7 @@ No modules.
 | <a name="input_app_secrets"></a> [app\_secrets](#input\_app\_secrets) | List of one or more environment variables from Secrets Manager. | `list(any)` | `[]` | no |
 | <a name="input_assign_public_ip"></a> [assign\_public\_ip](#input\_assign\_public\_ip) | Assign a public IP address to the ENI | `bool` | `true` | no |
 | <a name="input_autoscaling"></a> [autoscaling](#input\_autoscaling) | Boolean designating an Auto Scaling. | `bool` | `false` | no |
-| <a name="input_autoscaling_settings"></a> [autoscaling\_settings](#input\_autoscaling\_settings) | Settings of Auto Scaling. | `map(any)` | <pre>{<br>  "max_capacity": 0,<br>  "min_capacity": 0,<br>  "scale_in_cooldown": 300,<br>  "scale_out_cooldown": 300,<br>  "target_cpu_value": 0<br>}</pre> | no |
+| <a name="input_autoscaling_settings"></a> [autoscaling\_settings](#input\_autoscaling\_settings) | Settings of Auto Scaling. | `any` | <pre>{<br>  "max_capacity": 0,<br>  "min_capacity": 0,<br>  "scale_in_cooldown": 300,<br>  "scale_out_cooldown": 300,<br>  "target_cpu_value": 0<br>}</pre> | no |
 | <a name="input_capacity_provider_strategy"></a> [capacity\_provider\_strategy](#input\_capacity\_provider\_strategy) | The capacity provider strategy to use for the service. | `list(any)` | `null` | no |
 | <a name="input_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#input\_cloudwatch\_log\_group\_name) | The name of an existing CloudWatch group. | `string` | `""` | no |
 | <a name="input_cloudwatch_settings"></a> [cloudwatch\_settings](#input\_cloudwatch\_settings) | Settings of Cloudwatch Alarms. | `any` | `{}` | no |
@@ -231,7 +265,7 @@ No modules.
 | <a name="input_image_uri"></a> [image\_uri](#input\_image\_uri) | The container image URI. | `string` | n/a | yes |
 | <a name="input_lb_arn_suffix"></a> [lb\_arn\_suffix](#input\_lb\_arn\_suffix) | The ARN suffix for use with Auto Scaling ALB requests per target. | `string` | `""` | no |
 | <a name="input_lb_host_header"></a> [lb\_host\_header](#input\_lb\_host\_header) | List of host header patterns to match. | `list(any)` | `null` | no |
-| <a name="input_lb_listener_arn"></a> [lb\_listener\_arn](#input\_lb\_listener\_arn) | List of ARN LB listeners | `list(any)` | <pre>[<br>  ""<br>]</pre> | no |
+| <a name="input_lb_listener_arn"></a> [lb\_listener\_arn](#input\_lb\_listener\_arn) | List of ARN LB listeners | `list(any)` | `[]` | no |
 | <a name="input_lb_path_pattern"></a> [lb\_path\_pattern](#input\_lb\_path\_pattern) | List of path patterns to match. | `list(any)` | `null` | no |
 | <a name="input_lb_priority"></a> [lb\_priority](#input\_lb\_priority) | The priority for the rule between 1 and 50000. | `number` | `null` | no |
 | <a name="input_lb_stickiness"></a> [lb\_stickiness](#input\_lb\_stickiness) | LB Stickiness block. | `map(any)` | `null` | no |
@@ -253,6 +287,7 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_task_definition_arn"></a> [task\_definition\_arn](#output\_task\_definition\_arn) | The ARN of the task definition. |
+| <a name="output_task_lb_target_group_arn"></a> [task\_lb\_target\_group\_arn](#output\_task\_lb\_target\_group\_arn) | The ARN of the task load balancer target group. |
 | <a name="output_task_security_group_id"></a> [task\_security\_group\_id](#output\_task\_security\_group\_id) | The id of the Security Group used in tasks. |
 
 ## Authors

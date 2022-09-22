@@ -476,6 +476,58 @@ resource "aws_appautoscaling_policy" "ecs_policy_requests" {
   }
 }
 
+resource "aws_appautoscaling_policy" "ecs_policy_custom" {
+  count = var.autoscaling == true && lookup(var.autoscaling_settings, "custom_metric", [""]) != [""] ? length(var.autoscaling_settings.custom_metric) : 0
+
+  name               = "${var.name}-scale-custom-metric-${count.index}"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.0.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.0.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.0.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    customized_metric_specification {
+      metric_name = var.autoscaling_settings.custom_metric[count.index].metric_name
+      namespace   = var.autoscaling_settings.custom_metric[count.index].namespace
+      statistic   = try(var.autoscaling_settings.custom_metric[count.index].statistic, "Average")
+      unit        = try(var.autoscaling_settings.custom_metric[count.index].unit, null)
+
+
+      dynamic "dimensions" {
+        for_each = try(var.autoscaling_settings.custom_metric[count.index].dimensions, [])
+
+        content {
+          name  = dimensions.value.name
+          value = dimensions.value.value
+
+        }
+      }
+    }
+
+    target_value       = var.autoscaling_settings.custom_metric[count.index].target_value
+    scale_in_cooldown  = var.autoscaling_settings.scale_in_cooldown
+    scale_out_cooldown = var.autoscaling_settings.scale_out_cooldown
+  }
+}
+
+resource "aws_appautoscaling_scheduled_action" "ecs_scheduled" {
+  count = var.autoscaling == true && lookup(var.autoscaling_settings, "scheduled", [""]) != [""] ? length(var.autoscaling_settings.scheduled) : 0
+
+  name               = "${var.name}-scale-scheduled-${count.index}"
+  resource_id        = aws_appautoscaling_target.ecs_target.0.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.0.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.0.service_namespace
+  schedule           = var.autoscaling_settings.scheduled[count.index].schedule
+  start_time         = try(var.autoscaling_settings.scheduled[count.index].start_time, null)
+  end_time           = try(var.autoscaling_settings.scheduled[count.index].end_time, null)
+  timezone           = try(var.autoscaling_settings.scheduled[count.index].timezone, "UTC")
+
+  scalable_target_action {
+    min_capacity = try(var.autoscaling_settings.scheduled[count.index].min_capacity, null)
+    max_capacity = try(var.autoscaling_settings.scheduled[count.index].max_capacity, null)
+  }
+}
+
 ## CloudWatch Alarms
 resource "aws_cloudwatch_metric_alarm" "ecs_service_cpu" {
   count = lookup(var.cloudwatch_settings, "enabled", false) == true && lookup(var.cloudwatch_settings, "cpu_threshold", false) != false ? 1 : 0
@@ -587,7 +639,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_service_max_task_count" {
   evaluation_periods  = "1"
   metric_name         = "RunningTaskCount"
   namespace           = "ECS/ContainerInsights"
-  period              = "3600"
+  period              = "300"
   statistic           = "Average"
   threshold           = var.cloudwatch_settings.max_task_count
 
@@ -610,9 +662,32 @@ resource "aws_cloudwatch_metric_alarm" "ecs_service_min_task_count" {
   evaluation_periods  = "1"
   metric_name         = "RunningTaskCount"
   namespace           = "ECS/ContainerInsights"
-  period              = "900"
+  period              = "300"
   statistic           = "Average"
   threshold           = var.cloudwatch_settings.min_task_count
+
+  dimensions = {
+    ClusterName = trimprefix(data.aws_arn.ecs_cluster.resource, "cluster/")
+    ServiceName = aws_ecs_service.this.0.name
+  }
+
+  alarm_actions = var.cloudwatch_settings.sns_topic_arn
+  ok_actions    = var.cloudwatch_settings.sns_topic_arn
+
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "ecs_service_deployment_count" {
+  count = lookup(var.cloudwatch_settings, "enabled", false) == true && lookup(var.cloudwatch_settings, "deployment_count", false) != false ? 1 : 0
+
+  alarm_name          = "${var.cloudwatch_settings.prefix}-ECS-${trimprefix(data.aws_arn.ecs_cluster.resource, "cluster/")}/${aws_ecs_service.this.0.name}->Deployment-Count"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "DeploymentCount"
+  namespace           = "ECS/ContainerInsights"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = var.cloudwatch_settings.deployment_count
 
   dimensions = {
     ClusterName = trimprefix(data.aws_arn.ecs_cluster.resource, "cluster/")
