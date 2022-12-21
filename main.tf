@@ -310,16 +310,16 @@ resource "aws_ecs_task_definition" "app" {
 
       efs_volume_configuration {
         file_system_id          = volume.value.file_system_id
-        root_directory          = lookup(volume.value.root_directory, "/")
-        transit_encryption      = lookup(volume.value.transit_encryption, "DISABLED")
-        transit_encryption_port = lookup(volume.value.transit_encryption_port, null)
+        root_directory          = try(volume.value.root_directory, "/")
+        transit_encryption      = try(volume.value.transit_encryption, "DISABLED")
+        transit_encryption_port = try(volume.value.transit_encryption_port, null)
 
         dynamic "authorization_config" {
-          for_each = lookup(volume.value.authorization_config_access_point_id, null) != null ? [1] : []
+          for_each = try(volume.value.authorization_config_access_point_id, null) != null ? [1] : []
 
           content {
             access_point_id = volume.value.authorization_config_access_point_id
-            iam             = lookup(volume.value.volume.authorization_config_iam, "DISABLED")
+            iam             = try(volume.value.volume.authorization_config_iam, "DISABLED")
           }
         }
       }
