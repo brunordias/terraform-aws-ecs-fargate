@@ -303,27 +303,24 @@ resource "aws_ecs_task_definition" "app" {
   task_role_arn            = aws_iam_role.task_role.arn
 
   dynamic "volume" {
-    for_each = var.efs_volume_configuration == [] ? [] : [for v in var.efs_volume_configuration : {
-      name                    = v.name
-      file_system_id          = v.file_system_id
-      root_directory          = v.root_directory
-      transit_encryption      = v.transit_encryption
-      transit_encryption_port = v.transit_encryption_port
-      access_point_id         = v.authorization_config_access_point_id
-      iam                     = v.authorization_config_iam
-    }]
+    for_each = var.efs_volume_configuration
 
     content {
       name = volume.value.name
 
       efs_volume_configuration {
         file_system_id          = volume.value.file_system_id
-        root_directory          = volume.value.root_directory
-        transit_encryption      = volume.value.transit_encryption
-        transit_encryption_port = volume.value.transit_encryption_port
-        authorization_config {
-          access_point_id = volume.value.access_point_id
-          iam             = volume.value.iam
+        root_directory          = try(volume.value.root_directory, "/")
+        transit_encryption      = try(volume.value.transit_encryption, "DISABLED")
+        transit_encryption_port = try(volume.value.transit_encryption_port, null)
+
+        dynamic "authorization_config" {
+          for_each = try(volume.value.authorization_config_access_point_id, null) != null ? [1] : []
+
+          content {
+            access_point_id = volume.value.authorization_config_access_point_id
+            iam             = try(volume.value.volume.authorization_config_iam, "DISABLED")
+          }
         }
       }
     }

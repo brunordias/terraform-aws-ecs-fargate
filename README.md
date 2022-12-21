@@ -173,9 +173,9 @@ module "ecs_fargate" {
   ]
   efs_mount_configuration = [
     {
-      "sourceVolume" : "efs-example",
-      "containerPath" : "/mount",
-      "readOnly" : false
+      sourceVolume = "efs-example"
+      containerPath = "/mount"
+      readOnly = false
     }
   ]
 
