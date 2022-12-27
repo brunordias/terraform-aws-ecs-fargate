@@ -514,6 +514,38 @@ resource "aws_appautoscaling_policy" "ecs_policy_custom" {
   }
 }
 
+resource "aws_appautoscaling_policy" "ecs_policy_response_time" {
+  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_response_time", null) != null ? 1 : 0
+
+  name               = "${var.name}-scale-response-time"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.0.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.0.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.0.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    customized_metric_specification {
+      metric_name = "TargetResponseTime"
+      namespace   = "AWS/ApplicationELB"
+      statistic   = "Average"
+      unit        = null
+
+      dimensions {
+        name  = "LoadBalancer"
+        value = var.lb_arn_suffix
+      }
+      dimensions {
+        name  = "TargetGroup"
+        value = aws_lb_target_group.app.0.arn_suffix
+      }
+    }
+
+    target_value       = lookup(var.autoscaling_settings, "target_response_time", 0)
+    scale_in_cooldown  = var.autoscaling_settings.scale_in_cooldown
+    scale_out_cooldown = var.autoscaling_settings.scale_out_cooldown
+  }
+}
+
 resource "aws_appautoscaling_scheduled_action" "ecs_scheduled" {
   count = var.autoscaling == true && lookup(var.autoscaling_settings, "scheduled", [""]) != [""] ? length(var.autoscaling_settings.scheduled) : 0
 
