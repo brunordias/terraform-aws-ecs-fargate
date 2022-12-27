@@ -128,7 +128,7 @@ variable "lb_target_group_type" {
 variable "lb_arn_suffix" {
   type        = string
   default     = ""
-  description = "The ARN suffix for use with Auto Scaling ALB requests per target."
+  description = "The ARN suffix for use with Auto Scaling ALB requests per target and resquet response time."
 }
 
 variable "lb_listener_arn" {
