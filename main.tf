@@ -33,6 +33,10 @@ locals {
   ]
 }
 
+resource "random_id" "suffix" {
+  byte_length = 8
+}
+
 ### Data
 data "aws_region" "current" {}
 
@@ -169,7 +173,7 @@ resource "aws_service_discovery_service" "service" {
 
 ### ECS
 resource "aws_iam_role" "execution_role" {
-  name = "${var.name}-ecs-execution-role"
+  name = "${var.name}-ecs-execution-role-${random_id.suffix.id}"
 
   assume_role_policy = <<EOF
 {
@@ -189,7 +193,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "execution_policy" {
-  name = "${var.name}-ecs-execution-policy"
+  name = "${var.name}-ecs-execution-policy-${random_id.suffix.id}"
   role = aws_iam_role.execution_role.id
 
   policy = <<EOF
@@ -219,7 +223,7 @@ EOF
 resource "aws_iam_role_policy" "execution_policy_s3" {
   count = var.app_environment_file_arn != null ? length(var.app_environment_file_arn) : 0
 
-  name = "${var.name}-ecs-execution-s3-policy-${count.index}"
+  name = "${var.name}-ecs-execution-s3-policy-${random_id.suffix.id}-${count.index}"
   role = aws_iam_role.execution_role.id
 
   policy = <<EOF
@@ -241,7 +245,7 @@ EOF
 }
 
 resource "aws_iam_role" "task_role" {
-  name = "${var.name}-ecs-task-role"
+  name = "${var.name}-ecs-task-role-${random_id.suffix.id}"
 
   assume_role_policy = <<EOF
 {
@@ -261,7 +265,7 @@ EOF
 }
 
 resource "aws_iam_policy" "ssm_policy" {
-  name = "${var.name}-ecs-ssm-policy"
+  name = "${var.name}-ecs-ssm-policy-${random_id.suffix.id}"
 
   policy = <<EOF
 {
