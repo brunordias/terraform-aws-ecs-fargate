@@ -128,7 +128,7 @@ variable "lb_target_group_type" {
 variable "lb_arn_suffix" {
   type        = string
   default     = ""
-  description = "The ARN suffix for use with Auto Scaling ALB requests per target."
+  description = "The ARN suffix for use with Auto Scaling ALB requests per target and resquet response time."
 }
 
 variable "lb_listener_arn" {
@@ -261,4 +261,16 @@ variable "fargate_working_directory" {
   type        = string
   default     = null
   description = "The working directory to run commands inside the container in. This parameter maps to WorkingDir in the Create a container."
+}
+
+variable "create_ecs_service_security_group" {
+  type        = bool
+  default     = true
+  description = "Boolean designating a ECS Service Security Group."
+}
+
+variable "ecs_service_security_group_ids" {
+  type        = list(any)
+  default     = []
+  description = "List of ECS Service Security Group IDs. This list replace the auto-created SG."
 }

@@ -99,12 +99,13 @@ module "ecs_fargate" {
   ]
   autoscaling = true
   autoscaling_settings  = {
-    max_capacity        = 10
-    min_capacity        = 1
-    target_cpu_value    = 65
-    target_memory_value = 65
-    scale_in_cooldown   = 300
-    scale_out_cooldown  = 300
+    max_capacity         = 10
+    min_capacity         = 1
+    target_cpu_value     = 65
+    target_memory_value  = 65
+    target_response_time = 2
+    scale_in_cooldown    = 300
+    scale_out_cooldown   = 300
     custom_metric = [
       {
         target_value = 100
@@ -189,12 +190,14 @@ module "ecs_fargate" {
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.13.1 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.74.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.4.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 3.74.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | >= 3.4.0 |
 
 ## Modules
 
@@ -208,6 +211,7 @@ No modules.
 | [aws_appautoscaling_policy.ecs_policy_custom](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
 | [aws_appautoscaling_policy.ecs_policy_memory](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
 | [aws_appautoscaling_policy.ecs_policy_requests](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
+| [aws_appautoscaling_policy.ecs_policy_response_time](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_policy) | resource |
 | [aws_appautoscaling_scheduled_action.ecs_scheduled](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_scheduled_action) | resource |
 | [aws_appautoscaling_target.ecs_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_target) | resource |
 | [aws_cloudwatch_log_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
@@ -229,6 +233,7 @@ No modules.
 | [aws_lb_target_group.app](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_security_group.ecs_tasks](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_service_discovery_service.service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/service_discovery_service) | resource |
+| [random_id.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [aws_arn.ecs_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/arn) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_vpc.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc) | data source |
@@ -248,11 +253,13 @@ No modules.
 | <a name="input_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#input\_cloudwatch\_log\_group\_name) | The name of an existing CloudWatch group. | `string` | `""` | no |
 | <a name="input_cloudwatch_settings"></a> [cloudwatch\_settings](#input\_cloudwatch\_settings) | Settings of Cloudwatch Alarms. | `any` | `{}` | no |
 | <a name="input_container_definitions"></a> [container\_definitions](#input\_container\_definitions) | External ECS container definitions | `any` | `null` | no |
+| <a name="input_create_ecs_service_security_group"></a> [create\_ecs\_service\_security\_group](#input\_create\_ecs\_service\_security\_group) | Boolean designating a ECS Service Security Group. | `bool` | `true` | no |
 | <a name="input_deployment_circuit_breaker"></a> [deployment\_circuit\_breaker](#input\_deployment\_circuit\_breaker) | Boolean designating a deployment circuit breaker. | `bool` | `false` | no |
 | <a name="input_deployment_controller"></a> [deployment\_controller](#input\_deployment\_controller) | Type of deployment controller. Valid values: CODE\_DEPLOY, ECS, EXTERNAL | `string` | `"ECS"` | no |
 | <a name="input_ecs_cluster"></a> [ecs\_cluster](#input\_ecs\_cluster) | The ARN of ECS cluster. | `string` | `""` | no |
 | <a name="input_ecs_service"></a> [ecs\_service](#input\_ecs\_service) | Boolean designating a service. | `bool` | `false` | no |
 | <a name="input_ecs_service_desired_count"></a> [ecs\_service\_desired\_count](#input\_ecs\_service\_desired\_count) | The number of instances of the task definition to place and keep running. | `number` | `1` | no |
+| <a name="input_ecs_service_security_group_ids"></a> [ecs\_service\_security\_group\_ids](#input\_ecs\_service\_security\_group\_ids) | List of ECS Service Security Group IDs. This list replace the auto-created SG. | `list(any)` | `[]` | no |
 | <a name="input_efs_mount_configuration"></a> [efs\_mount\_configuration](#input\_efs\_mount\_configuration) | Settings of EFS mount configuration. | `list(any)` | `[]` | no |
 | <a name="input_efs_volume_configuration"></a> [efs\_volume\_configuration](#input\_efs\_volume\_configuration) | Settings of EFS volume configuration. | `list(any)` | `[]` | no |
 | <a name="input_fargate_command"></a> [fargate\_command](#input\_fargate\_command) | The command that's passed to the container. This parameter maps to Cmd in the Create a container. | `list(any)` | `null` | no |
@@ -263,7 +270,7 @@ No modules.
 | <a name="input_fargate_working_directory"></a> [fargate\_working\_directory](#input\_fargate\_working\_directory) | The working directory to run commands inside the container in. This parameter maps to WorkingDir in the Create a container. | `string` | `null` | no |
 | <a name="input_health_check"></a> [health\_check](#input\_health\_check) | Health check in Load Balance target group. | `map(any)` | `null` | no |
 | <a name="input_image_uri"></a> [image\_uri](#input\_image\_uri) | The container image URI. | `string` | n/a | yes |
-| <a name="input_lb_arn_suffix"></a> [lb\_arn\_suffix](#input\_lb\_arn\_suffix) | The ARN suffix for use with Auto Scaling ALB requests per target. | `string` | `""` | no |
+| <a name="input_lb_arn_suffix"></a> [lb\_arn\_suffix](#input\_lb\_arn\_suffix) | The ARN suffix for use with Auto Scaling ALB requests per target and resquet response time. | `string` | `""` | no |
 | <a name="input_lb_host_header"></a> [lb\_host\_header](#input\_lb\_host\_header) | List of host header patterns to match. | `list(any)` | `null` | no |
 | <a name="input_lb_listener_arn"></a> [lb\_listener\_arn](#input\_lb\_listener\_arn) | List of ARN LB listeners | `list(any)` | `[]` | no |
 | <a name="input_lb_path_pattern"></a> [lb\_path\_pattern](#input\_lb\_path\_pattern) | List of path patterns to match. | `list(any)` | `null` | no |

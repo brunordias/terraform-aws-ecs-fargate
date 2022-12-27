@@ -131,13 +131,23 @@ module "ecs_fargate" {
       base              = 0
     }
   ]
-  autoscaling = false
   app_environment = [
     {
       name  = "ENV-NAME"
       value = "development"
     }
   ]
+  lb_arn_suffix = aws_lb.alb.arn_suffix
+  autoscaling   = true
+  autoscaling_settings = {
+    max_capacity         = 10
+    min_capacity         = 1
+    target_cpu_value     = 65
+    target_memory_value  = 65
+    target_response_time = 2
+    scale_in_cooldown    = 300
+    scale_out_cooldown   = 300
+  }
 
   tags = local.tags
 }

@@ -33,6 +33,10 @@ locals {
   ]
 }
 
+resource "random_id" "suffix" {
+  byte_length = 8
+}
+
 ### Data
 data "aws_region" "current" {}
 
@@ -47,6 +51,8 @@ data "aws_arn" "ecs_cluster" {
 ### Security
 # Task security group
 resource "aws_security_group" "ecs_tasks" {
+  count = var.create_ecs_service_security_group == true ? 1 : 0
+
   name        = "${var.name}-tasks"
   description = "allow inbound access from VPC"
   vpc_id      = data.aws_vpc.this.id
@@ -169,7 +175,7 @@ resource "aws_service_discovery_service" "service" {
 
 ### ECS
 resource "aws_iam_role" "execution_role" {
-  name = "${var.name}-ecs-execution-role"
+  name = "${var.name}-ecs-execution-role-${random_id.suffix.id}"
 
   assume_role_policy = <<EOF
 {
@@ -189,7 +195,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "execution_policy" {
-  name = "${var.name}-ecs-execution-policy"
+  name = "${var.name}-ecs-execution-policy-${random_id.suffix.id}"
   role = aws_iam_role.execution_role.id
 
   policy = <<EOF
@@ -219,7 +225,7 @@ EOF
 resource "aws_iam_role_policy" "execution_policy_s3" {
   count = var.app_environment_file_arn != null ? length(var.app_environment_file_arn) : 0
 
-  name = "${var.name}-ecs-execution-s3-policy-${count.index}"
+  name = "${var.name}-ecs-execution-s3-policy-${random_id.suffix.id}-${count.index}"
   role = aws_iam_role.execution_role.id
 
   policy = <<EOF
@@ -241,7 +247,7 @@ EOF
 }
 
 resource "aws_iam_role" "task_role" {
-  name = "${var.name}-ecs-task-role"
+  name = "${var.name}-ecs-task-role-${random_id.suffix.id}"
 
   assume_role_policy = <<EOF
 {
@@ -261,7 +267,7 @@ EOF
 }
 
 resource "aws_iam_policy" "ssm_policy" {
-  name = "${var.name}-ecs-ssm-policy"
+  name = "${var.name}-ecs-ssm-policy-${random_id.suffix.id}"
 
   policy = <<EOF
 {
@@ -353,7 +359,7 @@ resource "aws_ecs_service" "this" {
   }
 
   network_configuration {
-    security_groups  = [aws_security_group.ecs_tasks.id]
+    security_groups  = try(var.ecs_service_security_group_ids, [aws_security_group.ecs_tasks.0.id])
     subnets          = var.subnet_ids
     assign_public_ip = var.assign_public_ip
   }
@@ -391,7 +397,8 @@ resource "aws_ecs_service" "this" {
   }
 
   depends_on = [
-    aws_lb_listener_rule.forward
+    aws_lb_listener_rule.forward,
+    aws_security_group.ecs_tasks
   ]
 
   lifecycle {
@@ -502,6 +509,38 @@ resource "aws_appautoscaling_policy" "ecs_policy_custom" {
     }
 
     target_value       = var.autoscaling_settings.custom_metric[count.index].target_value
+    scale_in_cooldown  = var.autoscaling_settings.scale_in_cooldown
+    scale_out_cooldown = var.autoscaling_settings.scale_out_cooldown
+  }
+}
+
+resource "aws_appautoscaling_policy" "ecs_policy_response_time" {
+  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_response_time", null) != null ? 1 : 0
+
+  name               = "${var.name}-scale-response-time"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.0.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.0.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.0.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    customized_metric_specification {
+      metric_name = "TargetResponseTime"
+      namespace   = "AWS/ApplicationELB"
+      statistic   = "Average"
+      unit        = null
+
+      dimensions {
+        name  = "LoadBalancer"
+        value = var.lb_arn_suffix
+      }
+      dimensions {
+        name  = "TargetGroup"
+        value = aws_lb_target_group.app.0.arn_suffix
+      }
+    }
+
+    target_value       = lookup(var.autoscaling_settings, "target_response_time", 0)
     scale_in_cooldown  = var.autoscaling_settings.scale_in_cooldown
     scale_out_cooldown = var.autoscaling_settings.scale_out_cooldown
   }
