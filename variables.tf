@@ -89,6 +89,12 @@ variable "health_check" {
   description = "Health check in Load Balance target group."
 }
 
+variable "service_discovery" {
+  type        = bool
+  default     = false
+  description = "Boolean designating a Service Discovery Namespace."
+}
+
 variable "service_discovery_namespace_id" {
   type        = string
   default     = null

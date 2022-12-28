@@ -46,7 +46,7 @@ module "ecs_cluster" {
 ## ECS Fargate
 module "ecs_fargate" {
   source  = "brunordias/ecs-fargate/aws"
-  version = "~> 6.1.0"
+  version = "~> 6.2.0"
 
   name                       = "nginx"
   ecs_cluster                = module.ecs_cluster.id
@@ -283,6 +283,7 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | Used to name resources and prefixes. | `string` | n/a | yes |
 | <a name="input_platform_version"></a> [platform\_version](#input\_platform\_version) | The Fargate platform version on which to run your service. | `string` | `"LATEST"` | no |
 | <a name="input_policies"></a> [policies](#input\_policies) | List of one or more IAM policy ARN to be used in the Task execution IAM role. | `list(any)` | `[]` | no |
+| <a name="input_service_discovery"></a> [service\_discovery](#input\_service\_discovery) | Boolean designating a Service Discovery Namespace. | `bool` | `false` | no |
 | <a name="input_service_discovery_namespace_id"></a> [service\_discovery\_namespace\_id](#input\_service\_discovery\_namespace\_id) | Service Discovery Namespace ID. | `string` | `null` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | List of one or more subnet ids where the task will be performed. | `list(any)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A mapping of tags to assign to all resources. | `map(string)` | `{}` | no |
