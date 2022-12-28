@@ -51,8 +51,6 @@ data "aws_arn" "ecs_cluster" {
 ### Security
 # Task security group
 resource "aws_security_group" "ecs_tasks" {
-  count = var.create_ecs_service_security_group == true ? 1 : 0
-
   name        = "${var.name}-tasks"
   description = "allow inbound access from VPC"
   vpc_id      = data.aws_vpc.this.id
@@ -359,7 +357,7 @@ resource "aws_ecs_service" "this" {
   }
 
   network_configuration {
-    security_groups  = try(var.ecs_service_security_group_ids, [aws_security_group.ecs_tasks.0.id])
+    security_groups  = concat([aws_security_group.ecs_tasks.id], var.additional_security_group_ids)
     subnets          = var.subnet_ids
     assign_public_ip = var.assign_public_ip
   }
