@@ -155,7 +155,7 @@ resource "aws_cloudwatch_log_group" "this" {
 
 ### Service Discovery
 resource "aws_service_discovery_service" "service" {
-  count = var.service_discovery_namespace_id != null ? 1 : 0
+  count = var.service_discovery == true ? 1 : 0
 
   name = var.name
 
@@ -377,7 +377,7 @@ resource "aws_ecs_service" "this" {
   }
 
   dynamic "service_registries" {
-    for_each = var.service_discovery_namespace_id != null ? [1] : []
+    for_each = var.service_discovery == true ? [1] : []
 
     content {
       registry_arn = aws_service_discovery_service.service.0.arn

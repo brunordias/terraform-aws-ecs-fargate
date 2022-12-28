@@ -72,6 +72,36 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+## Service Discovery
+resource "aws_service_discovery_private_dns_namespace" "local" {
+  name        = "local"
+  description = "local"
+  vpc         = module.vpc.vpc_id
+
+  tags = local.tags
+}
+
+resource "aws_service_discovery_service" "local" {
+  name = "local"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.local.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+
+  tags = local.tags
+}
+
 ## ECS
 module "ecs_cluster" {
   source  = "brunordias/ecs-cluster/aws"
@@ -96,19 +126,21 @@ module "ecs_cluster" {
 module "ecs_fargate" {
   source = "../../"
 
-  name                       = local.name
-  ecs_cluster                = module.ecs_cluster.id
-  image_uri                  = "public.ecr.aws/nginx/nginx:1.19-alpine"
-  platform_version           = "1.4.0"
-  vpc_id                     = module.vpc.vpc_id
-  subnet_ids                 = module.vpc.private_subnets
-  fargate_cpu                = 256
-  fargate_memory             = 512
-  ecs_service_desired_count  = 1
-  app_port                   = 80
-  load_balancer              = true
-  ecs_service                = true
-  deployment_circuit_breaker = true
+  name                           = local.name
+  ecs_cluster                    = module.ecs_cluster.id
+  image_uri                      = "public.ecr.aws/nginx/nginx:1.19-alpine"
+  platform_version               = "1.4.0"
+  vpc_id                         = module.vpc.vpc_id
+  subnet_ids                     = module.vpc.private_subnets
+  fargate_cpu                    = 256
+  fargate_memory                 = 512
+  ecs_service_desired_count      = 1
+  app_port                       = 80
+  load_balancer                  = true
+  ecs_service                    = true
+  deployment_circuit_breaker     = true
+  service_discovery              = true
+  service_discovery_namespace_id = aws_service_discovery_private_dns_namespace.local.id
   lb_listener_arn = [
     aws_lb_listener.http.arn
   ]
