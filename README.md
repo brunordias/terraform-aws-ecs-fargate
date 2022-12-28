@@ -242,6 +242,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_additional_security_group_ids"></a> [additional\_security\_group\_ids](#input\_additional\_security\_group\_ids) | List of additional ECS Service Security Group IDs. | `list(any)` | `[]` | no |
 | <a name="input_app_environment"></a> [app\_environment](#input\_app\_environment) | List of one or more environment variables to be inserted in the container. | `list(any)` | `[]` | no |
 | <a name="input_app_environment_file_arn"></a> [app\_environment\_file\_arn](#input\_app\_environment\_file\_arn) | The ARN from the environment file hosted in S3. | `list(any)` | `null` | no |
 | <a name="input_app_port"></a> [app\_port](#input\_app\_port) | The application TCP port number. | `number` | n/a | yes |
@@ -253,13 +254,11 @@ No modules.
 | <a name="input_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#input\_cloudwatch\_log\_group\_name) | The name of an existing CloudWatch group. | `string` | `""` | no |
 | <a name="input_cloudwatch_settings"></a> [cloudwatch\_settings](#input\_cloudwatch\_settings) | Settings of Cloudwatch Alarms. | `any` | `{}` | no |
 | <a name="input_container_definitions"></a> [container\_definitions](#input\_container\_definitions) | External ECS container definitions | `any` | `null` | no |
-| <a name="input_create_ecs_service_security_group"></a> [create\_ecs\_service\_security\_group](#input\_create\_ecs\_service\_security\_group) | Boolean designating a ECS Service Security Group. | `bool` | `true` | no |
 | <a name="input_deployment_circuit_breaker"></a> [deployment\_circuit\_breaker](#input\_deployment\_circuit\_breaker) | Boolean designating a deployment circuit breaker. | `bool` | `false` | no |
 | <a name="input_deployment_controller"></a> [deployment\_controller](#input\_deployment\_controller) | Type of deployment controller. Valid values: CODE\_DEPLOY, ECS, EXTERNAL | `string` | `"ECS"` | no |
 | <a name="input_ecs_cluster"></a> [ecs\_cluster](#input\_ecs\_cluster) | The ARN of ECS cluster. | `string` | `""` | no |
 | <a name="input_ecs_service"></a> [ecs\_service](#input\_ecs\_service) | Boolean designating a service. | `bool` | `false` | no |
 | <a name="input_ecs_service_desired_count"></a> [ecs\_service\_desired\_count](#input\_ecs\_service\_desired\_count) | The number of instances of the task definition to place and keep running. | `number` | `1` | no |
-| <a name="input_ecs_service_security_group_ids"></a> [ecs\_service\_security\_group\_ids](#input\_ecs\_service\_security\_group\_ids) | List of ECS Service Security Group IDs. This list replace the auto-created SG. | `list(any)` | `[]` | no |
 | <a name="input_efs_mount_configuration"></a> [efs\_mount\_configuration](#input\_efs\_mount\_configuration) | Settings of EFS mount configuration. | `list(any)` | `[]` | no |
 | <a name="input_efs_volume_configuration"></a> [efs\_volume\_configuration](#input\_efs\_volume\_configuration) | Settings of EFS volume configuration. | `list(any)` | `[]` | no |
 | <a name="input_fargate_command"></a> [fargate\_command](#input\_fargate\_command) | The command that's passed to the container. This parameter maps to Cmd in the Create a container. | `list(any)` | `null` | no |

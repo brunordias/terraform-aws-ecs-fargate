@@ -263,14 +263,8 @@ variable "fargate_working_directory" {
   description = "The working directory to run commands inside the container in. This parameter maps to WorkingDir in the Create a container."
 }
 
-variable "create_ecs_service_security_group" {
-  type        = bool
-  default     = true
-  description = "Boolean designating a ECS Service Security Group."
-}
-
-variable "ecs_service_security_group_ids" {
+variable "additional_security_group_ids" {
   type        = list(any)
   default     = []
-  description = "List of ECS Service Security Group IDs. This list replace the auto-created SG."
+  description = "List of additional ECS Service Security Group IDs."
 }
