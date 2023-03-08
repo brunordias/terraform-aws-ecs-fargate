@@ -1,10 +1,10 @@
 ### Locals
 locals {
-  container_definitions = [
+  container_definitions = concat([
     {
-      cpu              = var.fargate_cpu
+      cpu              = var.fargate_cpu - try(sum([for c in var.additional_container : (c.cpu)]), 0)
       image            = var.image_uri
-      memory           = var.fargate_memory
+      memory           = var.fargate_memory - try(sum([for m in var.additional_container : (m.memory)]), 0)
       name             = var.name
       networkMode      = "awsvpc"
       essential        = var.fargate_essential
@@ -12,12 +12,13 @@ locals {
       command          = var.fargate_command
       workingDirectory = var.fargate_working_directory
       logConfiguration = {
-        logDriver = "awslogs"
-        options = {
+        logDriver = lookup(var.log_configuration, "log_driver", "awslogs")
+        options = lookup(var.log_configuration, "log_options", {
           awslogs-group         = aws_cloudwatch_log_group.this.name
           awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "ecs"
-        }
+        })
+        secretOptions = lookup(var.log_configuration, "log_secret_options", [])
       }
       portMappings = [
         {
@@ -29,6 +30,37 @@ locals {
       environment      = var.app_environment
       secrets          = var.app_secrets
       mountPoints      = var.efs_mount_configuration
+    }
+    ],
+    [for s in var.additional_container : merge({
+      logConfiguration = {
+        logDriver = lookup(var.log_configuration, "log_driver", "awslogs")
+        options = lookup(var.log_configuration, "log_options", {
+          awslogs-group         = aws_cloudwatch_log_group.this.name
+          awslogs-region        = data.aws_region.current.name
+          awslogs-stream-prefix = "ecs"
+        })
+        secretOptions = lookup(var.log_configuration, "log_secret_options", [])
+      }
+    }, s)],
+    local.log_router
+  )
+  log_router = lookup(var.log_configuration, "log_driver", "awslogs") == "awslogs" ? [] : [
+    {
+      name                  = "log_router"
+      image                 = lookup(var.log_configuration, "log_router_image_uri", "amazon/aws-for-fluent-bit:stable")
+      essential             = true
+      memoryReservation     = lookup(var.log_configuration, "log_router_memory_reservation", 50)
+      firelensConfiguration = lookup(var.log_configuration, "firelens_configuration", { type = "fluentbit" })
+      user                  = "0"
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.this.name
+          awslogs-region        = data.aws_region.current.name
+          awslogs-stream-prefix = "firelens"
+        }
+      }
     }
   ]
 }
@@ -210,8 +242,11 @@ resource "aws_iam_role_policy" "execution_policy" {
         "logs:CreateLogStream",
         "logs:PutLogEvents",
         "s3:GetBucketLocation",
+        "s3:PutObject",
         "kms:Decrypt",
-        "secretsmanager:GetSecretValue"
+        "secretsmanager:GetSecretValue",
+        "firehose:PutRecordBatch",
+        "kinesis:PutRecords"
       ],
       "Resource": "*"
     }
@@ -331,6 +366,11 @@ resource "aws_ecs_task_definition" "app" {
   }
 
   container_definitions = var.container_definitions != null ? jsonencode(var.container_definitions) : jsonencode(local.container_definitions)
+
+  runtime_platform {
+    operating_system_family = var.operating_system_family
+    cpu_architecture        = var.cpu_architecture
+  }
 
   tags = var.tags
 }
