@@ -274,3 +274,27 @@ variable "additional_security_group_ids" {
   default     = []
   description = "List of additional ECS Service Security Group IDs."
 }
+
+variable "operating_system_family" {
+  type        = string
+  default     = "LINUX"
+  description = "The operating system family in the runtime platform setting."
+}
+
+variable "cpu_architecture" {
+  type        = string
+  default     = "X86_64"
+  description = "The CPU architecture. Valid values: X86_64 or ARM64."
+}
+
+variable "additional_container" {
+  type        = list(any)
+  default     = []
+  description = "List of additional ECS Task containers."
+}
+
+variable "log_configuration" {
+  type        = any
+  default     = {}
+  description = "Settings of Custom log routing."
+}

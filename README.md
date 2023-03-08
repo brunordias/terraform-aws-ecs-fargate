@@ -46,7 +46,7 @@ module "ecs_cluster" {
 ## ECS Fargate
 module "ecs_fargate" {
   source  = "brunordias/ecs-fargate/aws"
-  version = "~> 6.2.0"
+  version = "~> 7.0.0"
 
   name                       = "nginx"
   ecs_cluster                = module.ecs_cluster.id
@@ -60,6 +60,7 @@ module "ecs_fargate" {
   app_port                   = 80
   load_balancer              = true
   ecs_service                = true
+  cpu_architecture           = "X86_64"
   deployment_circuit_breaker = true
   policies = [
     "arn:aws:iam::aws:policy/example"
@@ -183,6 +184,52 @@ module "ecs_fargate" {
   tags = local.tags
 }
 ```
+## Aditional Container
+To create aditional container in task definition, use `aditional_container` input.
+
+Use the [Task Definition Parameters](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html)
+```
+additional_container = [
+  {
+    name      = "datadog-agent"
+    image     = "public.ecr.aws/datadog/agent:latest"
+    cpu       = 256
+    memory    = 512
+    essential = true
+    environment = [
+      {
+        name  = "DD_API_KEY"
+        value = "<YOUR_API_KEY>"
+      },
+      {
+        name  = "ECS_FARGATE"
+        value = "true"
+      }
+    ]
+  }
+]
+```
+
+## Log Configuration
+To use Firelens as log router, use `log_configuration` input.
+```
+log_configuration = {
+  log_driver = "awsfirelens"
+  log_options = {
+    Name            = "S3"
+    region          = "us-east-1"
+    bucket          = "your-bucket"
+    total_file_size = "1M"
+    upload_timeout  = "1m"
+    use_put_object  = "On"
+    retry_limit     = "2"
+  }
+  firelens_configuration = {
+    type = "fluentbit"
+  }
+  log_router_image_uri = "amazon/aws-for-fluent-bit:stable"
+}
+```
 
 ## Requirements
 
@@ -242,6 +289,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_additional_container"></a> [additional\_container](#input\_additional\_container) | List of additional ECS Task containers. | `list(any)` | `[]` | no |
 | <a name="input_additional_security_group_ids"></a> [additional\_security\_group\_ids](#input\_additional\_security\_group\_ids) | List of additional ECS Service Security Group IDs. | `list(any)` | `[]` | no |
 | <a name="input_app_environment"></a> [app\_environment](#input\_app\_environment) | List of one or more environment variables to be inserted in the container. | `list(any)` | `[]` | no |
 | <a name="input_app_environment_file_arn"></a> [app\_environment\_file\_arn](#input\_app\_environment\_file\_arn) | The ARN from the environment file hosted in S3. | `list(any)` | `null` | no |
@@ -254,6 +302,7 @@ No modules.
 | <a name="input_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#input\_cloudwatch\_log\_group\_name) | The name of an existing CloudWatch group. | `string` | `""` | no |
 | <a name="input_cloudwatch_settings"></a> [cloudwatch\_settings](#input\_cloudwatch\_settings) | Settings of Cloudwatch Alarms. | `any` | `{}` | no |
 | <a name="input_container_definitions"></a> [container\_definitions](#input\_container\_definitions) | External ECS container definitions | `any` | `null` | no |
+| <a name="input_cpu_architecture"></a> [cpu\_architecture](#input\_cpu\_architecture) | The CPU architecture. Valid values: X86\_64 or ARM64. | `string` | `"X86_64"` | no |
 | <a name="input_deployment_circuit_breaker"></a> [deployment\_circuit\_breaker](#input\_deployment\_circuit\_breaker) | Boolean designating a deployment circuit breaker. | `bool` | `false` | no |
 | <a name="input_deployment_controller"></a> [deployment\_controller](#input\_deployment\_controller) | Type of deployment controller. Valid values: CODE\_DEPLOY, ECS, EXTERNAL | `string` | `"ECS"` | no |
 | <a name="input_ecs_cluster"></a> [ecs\_cluster](#input\_ecs\_cluster) | The ARN of ECS cluster. | `string` | `""` | no |
@@ -279,8 +328,10 @@ No modules.
 | <a name="input_lb_target_group_protocol"></a> [lb\_target\_group\_protocol](#input\_lb\_target\_group\_protocol) | The protocol to use for routing traffic to the targets. Should be one of TCP, TLS, UDP, TCP\_UDP, HTTP or HTTPS. | `string` | `"HTTP"` | no |
 | <a name="input_lb_target_group_type"></a> [lb\_target\_group\_type](#input\_lb\_target\_group\_type) | The type of target that you must specify when registering targets with this target group. | `string` | `"ip"` | no |
 | <a name="input_load_balancer"></a> [load\_balancer](#input\_load\_balancer) | Boolean designating a load balancer. | `bool` | `false` | no |
+| <a name="input_log_configuration"></a> [log\_configuration](#input\_log\_configuration) | Settings of Custom log routing. | `any` | `{}` | no |
 | <a name="input_log_retention_in_days"></a> [log\_retention\_in\_days](#input\_log\_retention\_in\_days) | The number of days to retain log in CloudWatch. | `number` | `7` | no |
 | <a name="input_name"></a> [name](#input\_name) | Used to name resources and prefixes. | `string` | n/a | yes |
+| <a name="input_operating_system_family"></a> [operating\_system\_family](#input\_operating\_system\_family) | The operating system family in the runtime platform setting. | `string` | `"LINUX"` | no |
 | <a name="input_platform_version"></a> [platform\_version](#input\_platform\_version) | The Fargate platform version on which to run your service. | `string` | `"LATEST"` | no |
 | <a name="input_policies"></a> [policies](#input\_policies) | List of one or more IAM policy ARN to be used in the Task execution IAM role. | `list(any)` | `[]` | no |
 | <a name="input_service_discovery"></a> [service\_discovery](#input\_service\_discovery) | Boolean designating a Service Discovery Namespace. | `bool` | `false` | no |
