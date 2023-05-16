@@ -175,6 +175,8 @@ resource "aws_lb_listener_rule" "forward" {
       }
     }
   }
+  
+  tags = var.tags
 }
 
 ### CloudWatch log group
