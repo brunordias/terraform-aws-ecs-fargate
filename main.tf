@@ -175,6 +175,8 @@ resource "aws_lb_listener_rule" "forward" {
       }
     }
   }
+  
+  tags = var.tags
 }
 
 ### CloudWatch log group
@@ -246,7 +248,8 @@ resource "aws_iam_role_policy" "execution_policy" {
         "kms:Decrypt",
         "secretsmanager:GetSecretValue",
         "firehose:PutRecordBatch",
-        "kinesis:PutRecords"
+        "kinesis:PutRecords",
+        "ssm:GetParameters"
       ],
       "Resource": "*"
     }
@@ -458,7 +461,7 @@ resource "aws_appautoscaling_target" "ecs_target" {
 }
 
 resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
-  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_cpu_value", null) != null ? 1 : 0
+  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_cpu_value", 0) != 0 ? 1 : 0
 
   name               = "${var.name}-scale-cpu"
   policy_type        = "TargetTrackingScaling"
@@ -478,7 +481,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
 }
 
 resource "aws_appautoscaling_policy" "ecs_policy_memory" {
-  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_memory_value", null) != null ? 1 : 0
+  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_memory_value", 0) != 0 ? 1 : 0
 
   name               = "${var.name}-scale-memory"
   policy_type        = "TargetTrackingScaling"
@@ -498,7 +501,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_memory" {
 }
 
 resource "aws_appautoscaling_policy" "ecs_policy_requests" {
-  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_request_value", null) != null ? 1 : 0
+  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_request_value", 0) != 0 ? 1 : 0
 
   name               = "${var.name}-scale-request"
   policy_type        = "TargetTrackingScaling"
@@ -553,7 +556,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_custom" {
 }
 
 resource "aws_appautoscaling_policy" "ecs_policy_response_time" {
-  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_response_time", null) != null ? 1 : 0
+  count = var.autoscaling == true && lookup(var.autoscaling_settings, "target_response_time", 0) != 0 ? 1 : 0
 
   name               = "${var.name}-scale-response-time"
   policy_type        = "TargetTrackingScaling"
