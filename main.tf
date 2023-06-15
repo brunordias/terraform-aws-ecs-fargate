@@ -248,7 +248,8 @@ resource "aws_iam_role_policy" "execution_policy" {
         "kms:Decrypt",
         "secretsmanager:GetSecretValue",
         "firehose:PutRecordBatch",
-        "kinesis:PutRecords"
+        "kinesis:PutRecords",
+        "ssm:GetParameters"
       ],
       "Resource": "*"
     }
