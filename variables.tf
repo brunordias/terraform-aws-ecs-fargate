@@ -298,3 +298,21 @@ variable "log_configuration" {
   default     = {}
   description = "Settings of Custom log routing."
 }
+
+variable "additional_security_group_rules" {
+  type        = list(any)
+  default     = []
+  description = "List of additional rules to be added in the ECS Service Security Group."
+}
+
+variable "ephemeral_storage" {
+  type        = number
+  default     = 21
+  description = "The total amount, in GiB, of ephemeral storage to set for the task. The minimum supported value is 21 GiB and the maximum supported value is 200 GiB."
+}
+
+variable "task_definition_skip_destroy" {
+  type        = bool
+  default     = false
+  description = "Whether to retain the old revision of the task definition when the resource is destroyed or replacement is necessary."
+}
