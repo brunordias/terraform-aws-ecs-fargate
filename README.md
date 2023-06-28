@@ -28,25 +28,25 @@ data "aws_lb_listener" "http" {
 
 ## ECS Cluster
 module "ecs_cluster" {
-  source  = "brunordias/ecs-cluster/aws"
-  version = "1.0.0"
+  source             = "brunordias/ecs-cluster/aws"
+  version            = "~> 2.0.0"
 
   name               = "terraform-ecs-test"
   capacity_providers = ["FARGATE", "FARGATE_SPOT"]
   default_capacity_provider_strategy = {
     capacity_provider = "FARGATE_SPOT"
-    weight            = null
-    base              = null
+    weight            = 5
+    base              = 1
   }
   container_insights = "enabled"
-
+  
   tags = local.tags
 }
 
 ## ECS Fargate
 module "ecs_fargate" {
   source  = "brunordias/ecs-fargate/aws"
-  version = "~> 7.0.0"
+  version = "~> 8.0.0"
 
   name                       = "nginx"
   ecs_cluster                = module.ecs_cluster.id
@@ -279,9 +279,11 @@ No modules.
 | [aws_lb_listener_rule.forward](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule) | resource |
 | [aws_lb_target_group.app](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_security_group.ecs_tasks](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group_rule.ecs_tasks](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_service_discovery_service.service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/service_discovery_service) | resource |
 | [random_id.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [aws_arn.ecs_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/arn) | data source |
+| [aws_ecs_task_definition.app](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecs_task_definition) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_vpc.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc) | data source |
 
@@ -291,6 +293,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_additional_container"></a> [additional\_container](#input\_additional\_container) | List of additional ECS Task containers. | `list(any)` | `[]` | no |
 | <a name="input_additional_security_group_ids"></a> [additional\_security\_group\_ids](#input\_additional\_security\_group\_ids) | List of additional ECS Service Security Group IDs. | `list(any)` | `[]` | no |
+| <a name="input_additional_security_group_rules"></a> [additional\_security\_group\_rules](#input\_additional\_security\_group\_rules) | List of additional rules to be added in the ECS Service Security Group. | `list(any)` | `[]` | no |
 | <a name="input_app_environment"></a> [app\_environment](#input\_app\_environment) | List of one or more environment variables to be inserted in the container. | `list(any)` | `[]` | no |
 | <a name="input_app_environment_file_arn"></a> [app\_environment\_file\_arn](#input\_app\_environment\_file\_arn) | The ARN from the environment file hosted in S3. | `list(any)` | `null` | no |
 | <a name="input_app_port"></a> [app\_port](#input\_app\_port) | The application TCP port number. | `number` | n/a | yes |
@@ -310,6 +313,7 @@ No modules.
 | <a name="input_ecs_service_desired_count"></a> [ecs\_service\_desired\_count](#input\_ecs\_service\_desired\_count) | The number of instances of the task definition to place and keep running. | `number` | `1` | no |
 | <a name="input_efs_mount_configuration"></a> [efs\_mount\_configuration](#input\_efs\_mount\_configuration) | Settings of EFS mount configuration. | `list(any)` | `[]` | no |
 | <a name="input_efs_volume_configuration"></a> [efs\_volume\_configuration](#input\_efs\_volume\_configuration) | Settings of EFS volume configuration. | `list(any)` | `[]` | no |
+| <a name="input_ephemeral_storage"></a> [ephemeral\_storage](#input\_ephemeral\_storage) | The total amount, in GiB, of ephemeral storage to set for the task. The minimum supported value is 21 GiB and the maximum supported value is 200 GiB. | `number` | `21` | no |
 | <a name="input_fargate_command"></a> [fargate\_command](#input\_fargate\_command) | The command that's passed to the container. This parameter maps to Cmd in the Create a container. | `list(any)` | `null` | no |
 | <a name="input_fargate_cpu"></a> [fargate\_cpu](#input\_fargate\_cpu) | Fargate instance CPU units to provision (1 vCPU = 1024 CPU units). | `number` | `256` | no |
 | <a name="input_fargate_entrypoint"></a> [fargate\_entrypoint](#input\_fargate\_entrypoint) | The entry point that's passed to the container. This parameter maps to Entrypoint in the Create a container. | `list(any)` | `null` | no |
@@ -338,6 +342,7 @@ No modules.
 | <a name="input_service_discovery_namespace_id"></a> [service\_discovery\_namespace\_id](#input\_service\_discovery\_namespace\_id) | Service Discovery Namespace ID. | `string` | `null` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | List of one or more subnet ids where the task will be performed. | `list(any)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A mapping of tags to assign to all resources. | `map(string)` | `{}` | no |
+| <a name="input_task_definition_skip_destroy"></a> [task\_definition\_skip\_destroy](#input\_task\_definition\_skip\_destroy) | Whether to retain the old revision of the task definition when the resource is destroyed or replacement is necessary. | `bool` | `false` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The VPC id where the task will be performed. | `string` | n/a | yes |
 
 ## Outputs

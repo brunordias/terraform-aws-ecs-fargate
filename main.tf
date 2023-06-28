@@ -18,7 +18,7 @@ locals {
           awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "ecs"
         })
-        secretOptions = lookup(var.log_configuration, "log_secret_options", [])
+        secretOptions = lookup(var.log_configuration, "log_secret_options", null)
       }
       portMappings = [
         {
@@ -40,7 +40,7 @@ locals {
           awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "ecs"
         })
-        secretOptions = lookup(var.log_configuration, "log_secret_options", [])
+        secretOptions = lookup(var.log_configuration, "log_secret_options", null)
       }
     }, s)],
     local.log_router
@@ -102,6 +102,17 @@ resource "aws_security_group" "ecs_tasks" {
   }
 
   tags = var.tags
+}
+
+resource "aws_security_group_rule" "ecs_tasks" {
+  count = length(var.additional_security_group_rules)
+
+  type              = lookup(var.additional_security_group_rules[count.index], "type", "ingress")
+  from_port         = var.additional_security_group_rules[count.index].from_port
+  to_port           = var.additional_security_group_rules[count.index].to_port
+  protocol          = lookup(var.additional_security_group_rules[count.index], "protocol", "tcp")
+  cidr_blocks       = lookup(var.additional_security_group_rules[count.index], "cidr_blocks", [data.aws_vpc.this.cidr_block])
+  security_group_id = aws_security_group.ecs_tasks.id
 }
 
 ### ALB
@@ -175,7 +186,7 @@ resource "aws_lb_listener_rule" "forward" {
       }
     }
   }
-  
+
   tags = var.tags
 }
 
@@ -335,6 +346,10 @@ resource "aws_iam_role_policy_attachment" "task_role" {
   policy_arn = var.policies[count.index]
 }
 
+data "aws_ecs_task_definition" "app" {
+  task_definition = aws_ecs_task_definition.app.family
+}
+
 resource "aws_ecs_task_definition" "app" {
   family                   = var.name
   network_mode             = "awsvpc"
@@ -343,6 +358,7 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = var.fargate_memory
   execution_role_arn       = aws_iam_role.execution_role.arn
   task_role_arn            = aws_iam_role.task_role.arn
+  skip_destroy             = var.task_definition_skip_destroy
 
   dynamic "volume" {
     for_each = var.efs_volume_configuration
@@ -370,9 +386,21 @@ resource "aws_ecs_task_definition" "app" {
 
   container_definitions = var.container_definitions != null ? jsonencode(var.container_definitions) : jsonencode(local.container_definitions)
 
-  runtime_platform {
-    operating_system_family = var.operating_system_family
-    cpu_architecture        = var.cpu_architecture
+  dynamic "runtime_platform" {
+    for_each = var.operating_system_family != "LINUX" || var.cpu_architecture != "X86_64" ? [1] : []
+
+    content {
+      operating_system_family = var.operating_system_family
+      cpu_architecture        = var.cpu_architecture
+    }
+  }
+
+  dynamic "ephemeral_storage" {
+    for_each = var.ephemeral_storage != 21 ? [1] : []
+
+    content {
+      size_in_gib = var.ephemeral_storage
+    }
   }
 
   tags = var.tags
@@ -383,7 +411,7 @@ resource "aws_ecs_service" "this" {
 
   name                   = "${var.name}-service"
   cluster                = var.ecs_cluster
-  task_definition        = aws_ecs_task_definition.app.arn
+  task_definition        = data.aws_ecs_task_definition.app.arn
   desired_count          = var.ecs_service_desired_count
   launch_type            = var.capacity_provider_strategy == null ? "FARGATE" : null
   propagate_tags         = "SERVICE"
