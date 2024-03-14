@@ -418,7 +418,7 @@ resource "aws_ecs_service" "this" {
   propagate_tags                    = "SERVICE"
   platform_version                  = var.platform_version
   enable_execute_command            = true
-  health_check_grace_period_seconds = var.load_balancer == true && var.health_check_grace_period_seconds != null ? var.health_check_grace_period_seconds : null
+  health_check_grace_period_seconds = var.load_balancer == true ? var.health_check_grace_period_seconds : null
 
   dynamic "deployment_circuit_breaker" {
     for_each = var.deployment_circuit_breaker == true ? [1] : []
