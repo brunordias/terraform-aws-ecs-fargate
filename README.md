@@ -319,8 +319,10 @@ No modules.
 | <a name="input_fargate_entrypoint"></a> [fargate\_entrypoint](#input\_fargate\_entrypoint) | The entry point that's passed to the container. This parameter maps to Entrypoint in the Create a container. | `list(any)` | `null` | no |
 | <a name="input_fargate_essential"></a> [fargate\_essential](#input\_fargate\_essential) | Boolean designating a Fargate essential container. | `bool` | `true` | no |
 | <a name="input_fargate_memory"></a> [fargate\_memory](#input\_fargate\_memory) | Fargate instance memory to provision (in MiB). | `number` | `512` | no |
+| <a name="input_fargate_user"></a> [fargate\_user](#input\_fargate\_user) | The user to use inside the container. | `string` | `null` | no |
 | <a name="input_fargate_working_directory"></a> [fargate\_working\_directory](#input\_fargate\_working\_directory) | The working directory to run commands inside the container in. This parameter maps to WorkingDir in the Create a container. | `string` | `null` | no |
 | <a name="input_health_check"></a> [health\_check](#input\_health\_check) | Health check in Load Balance target group. | `map(any)` | `null` | no |
+| <a name="input_health_check_grace_period_seconds"></a> [health\_check\_grace\_period\_seconds](#input\_health\_check\_grace\_period\_seconds) | The period of time, in seconds, that the Amazon ECS service scheduler should ignore unhealthy Elastic Load Balancing target health checks after a task has first started. | `number` | `null` | no |
 | <a name="input_image_uri"></a> [image\_uri](#input\_image\_uri) | The container image URI. | `string` | n/a | yes |
 | <a name="input_lb_arn_suffix"></a> [lb\_arn\_suffix](#input\_lb\_arn\_suffix) | The ARN suffix for use with Auto Scaling ALB requests per target and resquet response time. | `string` | `""` | no |
 | <a name="input_lb_host_header"></a> [lb\_host\_header](#input\_lb\_host\_header) | List of host header patterns to match. | `list(any)` | `null` | no |

@@ -322,3 +322,9 @@ variable "health_check_grace_period_seconds" {
   default     = null
   description = "The period of time, in seconds, that the Amazon ECS service scheduler should ignore unhealthy Elastic Load Balancing target health checks after a task has first started."
 }
+
+variable "fargate_user" {
+  type        = string
+  default     = null
+  description = "The user to use inside the container."
+}

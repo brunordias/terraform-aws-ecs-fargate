@@ -10,6 +10,7 @@ locals {
       essential        = var.fargate_essential
       entryPoint       = var.fargate_entrypoint
       command          = var.fargate_command
+      user             = var.fargate_user
       workingDirectory = var.fargate_working_directory
       logConfiguration = {
         logDriver = lookup(var.log_configuration, "log_driver", "awslogs")
