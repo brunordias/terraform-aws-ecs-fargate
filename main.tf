@@ -458,7 +458,7 @@ resource "aws_ecs_service" "this" {
   }
 
   dynamic "capacity_provider_strategy" {
-    for_each = var.capacity_provider_strategy
+    for_each = var.capacity_provider_strategy != null ? var.capacity_provider_strategy : []
 
     content {
       capacity_provider = capacity_provider_strategy.value.capacity_provider
