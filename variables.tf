@@ -319,7 +319,7 @@ variable "task_definition_skip_destroy" {
 
 variable "health_check_grace_period_seconds" {
   type        = number
-  default     = null
+  default     = 0
   description = "The period of time, in seconds, that the Amazon ECS service scheduler should ignore unhealthy Elastic Load Balancing target health checks after a task has first started."
 }
 
