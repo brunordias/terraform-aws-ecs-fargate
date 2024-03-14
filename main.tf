@@ -409,14 +409,15 @@ resource "aws_ecs_task_definition" "app" {
 resource "aws_ecs_service" "this" {
   count = var.ecs_service == true ? 1 : 0
 
-  name                   = "${var.name}-service"
-  cluster                = var.ecs_cluster
-  task_definition        = data.aws_ecs_task_definition.app.arn
-  desired_count          = var.ecs_service_desired_count
-  launch_type            = var.capacity_provider_strategy == null ? "FARGATE" : null
-  propagate_tags         = "SERVICE"
-  platform_version       = var.platform_version
-  enable_execute_command = true
+  name                              = "${var.name}-service"
+  cluster                           = var.ecs_cluster
+  task_definition                   = data.aws_ecs_task_definition.app.arn
+  desired_count                     = var.ecs_service_desired_count
+  launch_type                       = var.capacity_provider_strategy == null ? "FARGATE" : null
+  propagate_tags                    = "SERVICE"
+  platform_version                  = var.platform_version
+  enable_execute_command            = true
+  health_check_grace_period_seconds = var.load_balancer == true && var.health_check_grace_period_seconds != null ? var.health_check_grace_period_seconds : null
 
   dynamic "deployment_circuit_breaker" {
     for_each = var.deployment_circuit_breaker == true ? [1] : []

@@ -316,3 +316,9 @@ variable "task_definition_skip_destroy" {
   default     = false
   description = "Whether to retain the old revision of the task definition when the resource is destroyed or replacement is necessary."
 }
+
+variable "health_check_grace_period_seconds" {
+  type        = number
+  default     = null
+  description = "The period of time, in seconds, that the Amazon ECS service scheduler should ignore unhealthy Elastic Load Balancing target health checks after a task has first started."
+}
