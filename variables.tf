@@ -328,3 +328,9 @@ variable "fargate_user" {
   default     = null
   description = "The user to use inside the container."
 }
+
+variable "service_discovery_service_name" {
+  type        = string
+  default     = null
+  description = "The name of the Service Discovery."
+}
