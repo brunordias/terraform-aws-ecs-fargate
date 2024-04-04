@@ -342,6 +342,7 @@ No modules.
 | <a name="input_policies"></a> [policies](#input\_policies) | List of one or more IAM policy ARN to be used in the Task execution IAM role. | `list(any)` | `[]` | no |
 | <a name="input_service_discovery"></a> [service\_discovery](#input\_service\_discovery) | Boolean designating a Service Discovery Namespace. | `bool` | `false` | no |
 | <a name="input_service_discovery_namespace_id"></a> [service\_discovery\_namespace\_id](#input\_service\_discovery\_namespace\_id) | Service Discovery Namespace ID. | `string` | `null` | no |
+| <a name="input_service_discovery_service_name"></a> [service\_discovery\_service\_name](#input\_service\_discovery\_service\_name) | The name of the Service Discovery. | `string` | `null` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | List of one or more subnet ids where the task will be performed. | `list(any)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A mapping of tags to assign to all resources. | `map(string)` | `{}` | no |
 | <a name="input_task_definition_skip_destroy"></a> [task\_definition\_skip\_destroy](#input\_task\_definition\_skip\_destroy) | Whether to retain the old revision of the task definition when the resource is destroyed or replacement is necessary. | `bool` | `false` | no |
