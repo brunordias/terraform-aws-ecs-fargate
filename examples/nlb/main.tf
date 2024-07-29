@@ -17,7 +17,7 @@ locals {
 ## VPC
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 3.0"
+  version = "~> 5.0"
 
   name = local.name
   cidr = "172.29.0.0/16"
@@ -55,14 +55,12 @@ resource "aws_lb_listener" "tcp" {
 ## ECS
 module "ecs_cluster" {
   source  = "brunordias/ecs-cluster/aws"
-  version = "~> 1.0.0"
+  version = "~> 2.0.0"
 
   name               = local.name
   capacity_providers = ["FARGATE", "FARGATE_SPOT"]
   default_capacity_provider_strategy = {
     capacity_provider = "FARGATE"
-    weight            = null
-    base              = null
   }
   container_insights = "disabled"
 
