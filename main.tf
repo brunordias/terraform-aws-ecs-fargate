@@ -413,7 +413,7 @@ resource "aws_ecs_service" "this" {
 
   name                              = "${var.name}-service"
   cluster                           = var.ecs_cluster
-  task_definition                   = data.aws_ecs_task_definition.app.arn
+  task_definition                   = try(data.aws_ecs_task_definition.app.arn, aws_ecs_task_definition.app.arn)
   desired_count                     = var.ecs_service_desired_count
   launch_type                       = var.capacity_provider_strategy == null ? "FARGATE" : null
   propagate_tags                    = "SERVICE"
